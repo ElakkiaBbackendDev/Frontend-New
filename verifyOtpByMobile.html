@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify OTP</title>
+</head>
+<body>
+
+<h2>Verify OTP through Mobile</h2>
+
+<h3>Enter OTP</h3>
+
+<input type="text" id="otpInput" placeholder="Enter OTP" autocomplete="off" onfocus="clearOtp()"><br><br>
+
+<p id="error" style="color:red;"></p>
+<p id="attemptsMsg" style="color:blue;"></p>
+<p id="otpMessage" style="color:green;"></p>
+
+<!-- ALWAYS VISIBLE -->
+<p>Want to change your mobile number 
+<button onclick="goBack()">Change here</button>
+</p>
+
+<button id="verifyBtn" onclick="verifyOtpByMobile()">Verify OTP</button>
+
+<br><br>
+<button id="resendBtn" onclick="resendOtp()" disabled>Resend OTP</button>
+<p id="timer"></p>
+
+<br><br>
+<a href="forgotPassword.html">Back</a>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+
+function goBack() {
+
+    localStorage.setItem("changeMode", "true");
+
+    // Use stored user instead of undefined variable
+    const user = localStorage.getItem("resetUser");
+
+    localStorage.setItem("resetUser", user);
+
+    // optional: mark OTP flow
+    sessionStorage.setItem("fromOtp", "true");
+
+    window.location.href = "forgotPassword.html"; // make sure filename is correct
+}
+
+let countdown = 60;
+let timerInterval;
+let maxAttempts = 3;
+let attemptsLeft = maxAttempts;
+
+// Clear OTP input
+function clearOtp(){
+    document.getElementById("otpInput").value="";
+}
+
+// Countdown function
+function startCountdown() {
+    const resendBtn = document.getElementById("resendBtn");
+    resendBtn.disabled = true;
+
+    timerInterval = setInterval(() => {
+        countdown--;
+
+        document.getElementById("timer").innerText = `OTP expires in ${countdown}s`;
+
+        if(countdown <= 0 || attemptsLeft <= 0){
+            resendBtn.disabled = false;
+            countdown = 60;
+            clearInterval(timerInterval);
+            document.getElementById("timer").innerText = "You can now resend OTP";
+        }
+    }, 1000);
+}
+
+// Update attempts message
+function updateAttemptsMsg() {
+    document.getElementById("attemptsMsg").innerText = `Attempts left: ${attemptsLeft}`;
+}
+
+// On page load
+window.onload = () => {
+    startCountdown();
+    updateAttemptsMsg();
+    clearOtp();
+};
+
+// VERIFY OTP (MOBILE)
+async function verifyOtpByMobile() {
+    const otp = document.getElementById("otpInput").value;
+    const error = document.getElementById("error");
+
+    if(!otp){
+        error.innerText = "Enter OTP";
+        return;
+    }
+
+    if(attemptsLeft <= 0){
+        error.innerText = "Attempts over. Please resend OTP.";
+        document.getElementById("resendBtn").disabled = false;
+        return;
+    }
+
+    try{
+        const storedOtp = localStorage.getItem("resetOtp");
+
+        if (String(otp) === String(storedOtp)) {
+            alert("OTP verified successfully!");
+
+            localStorage.setItem("resetToken", "dummy-token");
+
+            window.location.href = "verifySuccess.html";
+        } else {
+            throw new Error("Invalid OTP");
+        }
+
+    }catch(err){
+        error.innerText = err.message || "Invalid OTP";
+
+        attemptsLeft--;
+        updateAttemptsMsg();
+
+        if(attemptsLeft <= 0){
+            document.getElementById("verifyBtn").disabled = true;
+            document.getElementById("resendBtn").disabled = false;
+        }
+    }
+}
+
+// RESEND OTP (MOBILE)
+async function resendOtp(){
+    const mobile = localStorage.getItem("mobile");
+    const error = document.getElementById("error");
+    const otpMsg = document.getElementById("otpMessage");
+
+    try{
+
+        // Generate new OTP
+        const newOtp = Math.floor(1000 + Math.random() * 9000);
+
+        // Store OTP
+        localStorage.setItem("resetOtp", newOtp);
+
+        // Show OTP
+        otpMsg.innerText = `Your Resend OTP is: ${newOtp}`;
+
+        error.innerText = "";
+
+        // Reset attempts
+        attemptsLeft = maxAttempts;
+        document.getElementById("verifyBtn").disabled = false;
+
+        clearOtp();
+        startCountdown();
+        updateAttemptsMsg();
+
+    }catch(err){
+        error.innerText = "Resend failed";
+        otpMsg.innerText = "";
+    }
+}
+
+</script>
+
+</body>
+</html>

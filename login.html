@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login Page</title>
+
+<style>
+body {
+    font-family: Arial;
+}
+
+/* Input styling */
+input {
+    width: 200px;
+    padding: 10px;
+    margin-bottom: 5px;
+}
+
+/* Error message */
+.error {
+    color: red;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+/* Password container */
+.password-container {
+    position: relative;
+    width: 200px;
+}
+
+/* Password input */
+.password-container input {
+    width: 100%;
+    padding-right: 30px;
+}
+
+/* Eye icon */
+.password-container span {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* Button */
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Login</h2>
+
+<!-- Email or Mobile -->
+<input type="text" id="loginemailormobile" placeholder="Enter Email or Mobile" autocomplete="off">
+<div id="emailMobileError" class="error"></div>
+
+<!-- Password -->
+<div class="password-container">
+    <input type="password" id="loginpassword" placeholder="Enter Password" autocomplete="new-password">
+    <span onclick="togglePassword()">👁️</span>
+</div>
+<div id="passwordError" class="error"></div>
+
+<br>
+
+<!-- Login button -->
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<a href="forgotPassword.html">Forgot Password?</a>
+
+<p>Don't have an account? <a href="index.html">Sign up</a></p>
+
+<!-- Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+
+//  Email validation
+function isEmail(input) {
+    return /^[a-zA-Z0-9._%+-]+@(gmail|outlook|yahoo|thestackly)\.(com|in)$/.test(input);
+}
+
+//  Mobile validation (India)
+function isMobile(input) {
+    return /^[0-9]{10}$/.test(input);
+}
+
+//  Toggle password
+function togglePassword() {
+    const passwordField = document.getElementById("loginpassword");
+    passwordField.type = passwordField.type === "password" ? "text" : "password";
+}
+
+//  Login function
+async function login() {
+
+    const emailOrMobile = document.getElementById("loginemailormobile").value.trim().toLowerCase();
+
+    const password = document.getElementById("loginpassword").value;
+
+    // Clear old errors
+    document.getElementById("emailMobileError").innerText = "";
+    document.getElementById("passwordError").innerText = "";
+
+    let hasError = false;
+
+    // Empty validation
+    if (!emailOrMobile) {
+        document.getElementById("emailMobileError").innerText = "Email or Mobile is required";
+        hasError = true;
+    }
+
+    if (!password) {
+        document.getElementById("passwordError").innerText = "Password is required";
+        hasError = true;
+    }
+
+    // Format validation
+    if (emailOrMobile && !isEmail(emailOrMobile) && !isMobile(emailOrMobile)) {
+        document.getElementById("emailMobileError").innerText = "Enter valid Email or Mobile number";
+        hasError = true;
+    }
+
+    if (hasError) return;
+
+    try {
+        
+    // Get stored data
+    const storedEmail = localStorage.getItem("userEmail");
+    const storedMobile = localStorage.getItem("userMobile");
+    const storedPassword = localStorage.getItem("userPassword");
+
+    // Match email OR mobile
+    const isUserMatch = (emailOrMobile === storedEmail) || (emailOrMobile === storedMobile);
+
+    if (!isUserMatch) {
+        alert("User not found!");
+        return;
+    }
+
+    // Match password
+    if (password !== storedPassword) {
+        alert("Incorrect password.. If u forgot it? click 'Forgot Password' ");
+        return;
+    }
+
+    // Success
+    alert("Login successful!");
+
+    // Redirect
+    window.location.href = "home.html"; // change if needed
+
+} catch (error) {
+    console.error("Login error:", error);
+    alert("Something went wrong. Please try again.");
+}
+
+}
+</script>
+
+</body>
+</html>

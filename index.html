@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup Page</title>
+
+<style>
+body {
+    font-family: Arial;
+}
+
+.input-container {
+    position: relative;
+    width: 200px;
+}
+
+.input-container input {
+    width: 100%;
+    padding: 10px;
+    padding-right: 40px;
+    margin-bottom: 5px;
+}
+
+.input-container span {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    cursor: pointer;
+}
+
+.error {
+    color: red;
+    font-size: 14px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Signup</h2>
+
+<input type="text" id="username" placeholder="Enter User Name" autocomplete="off">
+<div id="nameError" class="error"></div> <br>
+
+<input type="text" id="email" placeholder="Enter Email" autocomplete="off">
+<div class="error" id="emailError"></div><br>
+
+<input type="text" id="mobile" placeholder="Enter Mobile Number" autocomplete="off">
+<div class="error" id="mobileError"></div><br>
+
+<div class="input-container">
+    <input type="password" id="password" placeholder="Enter Password" autocomplete="new-password">
+    <span onclick="togglePassword('password')">👁️</span>
+</div>
+<div class="error" id="passwordError"></div><br>
+
+<div class="input-container">
+    <input type="password" id="confirmpassword" placeholder="Confirm Password" autocomplete="new-password">
+    <span onclick="togglePassword('confirmpassword')">👁️</span>
+</div>
+<div class="error" id="confirmPasswordError"></div><br>
+
+<button onclick="signup()">Signup</button>
+
+<br><br>
+
+<a href="login.html">Already have an account? Login</a>
+
+<script>
+
+// Toggle Password
+function togglePassword(id){
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+}
+
+//  Password Validation Function
+function validatePassword(password) {
+
+    let errors = [];
+
+    if (!/.{8,}/.test(password)) {
+        errors.push("Minimum 8 characters required");
+    }
+    if (!/[A-Z]/.test(password)) {
+        errors.push("At least one uppercase letter required");
+    }
+    if (!/[a-z]/.test(password)) {
+        errors.push("At least one lowercase letter required");
+    }
+    if (!/[0-9]/.test(password)) {
+        errors.push("At least one number required");
+    }
+    if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
+        errors.push("At least one special character required");
+    }
+
+    return errors;
+}
+
+async function signup(){
+
+// Clear errors
+document.getElementById("nameError").innerText="";
+document.getElementById("emailError").innerText="";
+document.getElementById("mobileError").innerText="";
+document.getElementById("passwordError").innerText="";
+document.getElementById("confirmPasswordError").innerText="";
+
+const username = document.getElementById("username").value;
+const email = document.getElementById("email").value;
+const mobile = document.getElementById("mobile").value;
+const password = document.getElementById("password").value;
+const confirmPassword = document.getElementById("confirmpassword").value;
+
+let hasError = false;
+
+let firstName = "";
+let lastName = "";
+
+const usernameValue = username ? username.trim() : "";
+
+// Username validation
+if (!usernameValue) {
+    document.getElementById("nameError").innerText = "User name is required";
+    hasError = true;
+} else {
+    const nameParts = usernameValue.split(" ");
+    firstName = nameParts[0];
+    lastName = nameParts[1];
+
+    if (!firstName) {
+        document.getElementById("nameError").innerText = "First name is required";
+        hasError = true;
+    }
+    else if (!lastName) {
+        document.getElementById("nameError").innerText = "Last name is required";
+        hasError = true;
+    }
+}
+
+// Patterns
+const emailPattern = /^[a-zA-Z0-9._%+-]+@(gmail|outlook|yahoo|thestackly)\.(com|in)$/;
+const mobilePattern = /^[0-9]{10}$/;
+
+// Email validation
+if(!email){
+    document.getElementById("emailError").innerText = "Email is required";
+    hasError = true;
+}
+else if(!emailPattern.test(email.trim())){
+    document.getElementById("emailError").innerText =
+    "Enter valid email (gmail/outlook/yahoo/thestackly)";
+    hasError = true;
+}
+
+// Mobile validation
+if(!mobile){
+    document.getElementById("mobileError").innerText = "Mobile number is required";
+    hasError = true;
+}
+else if(!mobilePattern.test(mobile.trim())){
+    document.getElementById("mobileError").innerText =
+    "Mobile must be 10 digits";
+    hasError = true;
+}
+
+// Password validation using validatePassword()
+if (!password) {
+    document.getElementById("passwordError").innerText =
+    "Password cannot be empty";
+    hasError = true;
+} else {
+    const passwordErrors = validatePassword(password);
+
+    if (passwordErrors.length > 0) {
+        document.getElementById("passwordError").innerHTML =
+        passwordErrors.map(err => "• " + err).join("<br>");
+        hasError = true;
+    }
+}
+
+// Confirm password
+if(!confirmPassword){
+    document.getElementById("confirmPasswordError").innerText =
+    "Confirm password is required";
+    hasError = true;
+}
+else if(password !== confirmPassword){
+    document.getElementById("confirmPasswordError").innerText =
+    "Passwords do not match";
+    hasError = true;
+}
+
+if(hasError) return;
+
+try {
+
+// Format email
+const formattedEmail = email.trim().toLowerCase();
+
+// Duplicate check
+const existingEmail = localStorage.getItem("userEmail");
+if(existingEmail === formattedEmail){
+    alert("User already exists!");
+    return;
+}
+
+// Save data
+localStorage.setItem("firstName", firstName);
+localStorage.setItem("lastName", lastName);
+localStorage.setItem("userEmail", formattedEmail);
+localStorage.setItem("userMobile", mobile);
+localStorage.setItem("userPassword", password);
+
+alert("Signup successful!");
+
+// Redirect
+window.location.href = "login.html";
+
+} catch (error) {
+    console.error("Error during signup:", error);
+    alert("Something went wrong. Please try again.");
+}
+
+}
+
+</script>
+
+</body>
+</html>
