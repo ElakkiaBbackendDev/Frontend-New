@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,16 +8,23 @@ body {
     font-family: Arial;
 }
 
-/* Input styling */
+/* Input */
 input {
-    width: 200px;
+    width: 220px;
     padding: 10px;
     margin-bottom: 5px;
 }
 
-/* Error message */
+/* Error */
 .error {
     color: red;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+/* Info text */
+.info {
+    color: green;
     font-size: 13px;
     margin-bottom: 10px;
 }
@@ -26,23 +32,20 @@ input {
 /* Password container */
 .password-container {
     position: relative;
-    width: 200px;
+    width: 220px;
 }
 
-/* Password input */
 .password-container input {
     width: 100%;
-    padding-right: 30px;
+    padding-right: 35px;
 }
 
-/* Eye icon */
 .password-container span {
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    font-size: 18px;
 }
 
 /* Button */
@@ -58,8 +61,9 @@ button {
 
 <h2>Login</h2>
 
-<!-- Email or Mobile -->
-<input type="text" id="loginemailormobile" placeholder="Enter Email or Mobile" autocomplete="off">
+<!-- Email / Mobile -->
+<input type="text" id="loginemailormobile" placeholder="Enter Email or Mobile" oninput="detectUserType()" autocomplete="off">
+<div id="userTypeMsg" class="info"></div>
 <div id="emailMobileError" class="error"></div>
 
 <!-- Password -->
@@ -71,7 +75,6 @@ button {
 
 <br>
 
-<!-- Login button -->
 <button onclick="login()">Login</button>
 
 <br><br>
@@ -80,92 +83,126 @@ button {
 
 <p>Don't have an account? <a href="index.html">Sign up</a></p>
 
-<!-- Axios -->
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
 <script>
 
-//  Email validation
+// ================= VALIDATION =================
 function isEmail(input) {
     return /^[a-zA-Z0-9._%+-]+@(gmail|outlook|yahoo|thestackly)\.(com|in)$/.test(input);
 }
 
-//  Mobile validation (India)
 function isMobile(input) {
     return /^[0-9]{10}$/.test(input);
 }
 
-//  Toggle password
-function togglePassword() {
-    const passwordField = document.getElementById("loginpassword");
-    passwordField.type = passwordField.type === "password" ? "text" : "password";
+// ================= DETECT USER TYPE =================
+function detectUserType() {
+
+    const input = document.getElementById("loginemailormobile").value.trim().toLowerCase();
+    const msg = document.getElementById("userTypeMsg");
+
+    msg.innerText = "";
+
+    if (!input) return;
+
+    const storedEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
+    const storedMobile = (localStorage.getItem("userMobile") || "").toLowerCase();
+
+    let altData = JSON.parse(localStorage.getItem("alternateContacts")) || {};
+
+    // Primary check
+    if (input === storedEmail || input === storedMobile) {
+        msg.innerText = "Primary account";
+        return;
+    }
+
+    // Alternate check
+    let allAlternates = [];
+    Object.values(altData).forEach(arr => {
+        arr.forEach(a => allAlternates.push(a.toLowerCase()));
+    });
+
+    if (allAlternates.includes(input)) {
+        msg.innerText = "Alternate account";
+        return;
+    }
 }
 
-//  Login function
-async function login() {
+// ================= TOGGLE PASSWORD =================
+function togglePassword() {
+    const field = document.getElementById("loginpassword");
+    const eye = document.querySelector(".password-container span");
+
+    if (field.type === "password") {
+        field.type = "text";
+        eye.innerText = "🙈";
+    } else {
+        field.type = "password";
+        eye.innerText = "👁️";
+    }
+}
+
+// ================= LOGIN =================
+function login() {
 
     const emailOrMobile = document.getElementById("loginemailormobile").value.trim().toLowerCase();
-
     const password = document.getElementById("loginpassword").value;
 
-    // Clear old errors
-    document.getElementById("emailMobileError").innerText = "";
-    document.getElementById("passwordError").innerText = "";
+    const emailError = document.getElementById("emailMobileError");
+    const passError = document.getElementById("passwordError");
 
-    let hasError = false;
+    emailError.innerText = "";
+    passError.innerText = "";
 
-    // Empty validation
     if (!emailOrMobile) {
-        document.getElementById("emailMobileError").innerText = "Email or Mobile is required";
-        hasError = true;
+        emailError.innerText = "Email or Mobile is required";
+        return;
     }
 
     if (!password) {
-        document.getElementById("passwordError").innerText = "Password is required";
-        hasError = true;
+        passError.innerText = "Password is required";
+        return;
     }
 
-    // Format validation
-    if (emailOrMobile && !isEmail(emailOrMobile) && !isMobile(emailOrMobile)) {
-        document.getElementById("emailMobileError").innerText = "Enter valid Email or Mobile number";
-        hasError = true;
+    if (!isEmail(emailOrMobile) && !isMobile(emailOrMobile)) {
+        emailError.innerText = "Enter valid Email or Mobile";
+        return;
     }
 
-    if (hasError) return;
-
-    try {
-        
-    // Get stored data
-    const storedEmail = localStorage.getItem("userEmail");
-    const storedMobile = localStorage.getItem("userMobile");
+    const storedEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
+    const storedMobile = (localStorage.getItem("userMobile") || "").toLowerCase();
     const storedPassword = localStorage.getItem("userPassword");
 
-    // Match email OR mobile
-    const isUserMatch = (emailOrMobile === storedEmail) || (emailOrMobile === storedMobile);
+    let altData = JSON.parse(localStorage.getItem("alternateContacts")) || {};
 
-    if (!isUserMatch) {
-        alert("User not found!");
+    let isValidUser = false;
+
+    if (emailOrMobile === storedEmail || emailOrMobile === storedMobile) {
+        isValidUser = true;
+    }
+
+    let allAlternates = [];
+    Object.values(altData).forEach(arr => {
+        arr.forEach(a => allAlternates.push(a.toLowerCase()));
+    });
+
+    if (allAlternates.includes(emailOrMobile)) {
+        isValidUser = true;
+    }
+
+    if (!isValidUser) {
+        emailError.innerText = "User not registered";
         return;
     }
 
-    // Match password
     if (password !== storedPassword) {
-        alert("Incorrect password.. If u forgot it? click 'Forgot Password' ");
+        passError.innerText = "Incorrect password";
         return;
     }
 
-    // Success
     alert("Login successful!");
-
-    // Redirect
-    window.location.href = "home.html"; // change if needed
-
-} catch (error) {
-    console.error("Login error:", error);
-    alert("Something went wrong. Please try again.");
+    window.location.href = "home.html";
 }
 
-}
 </script>
 
 </body>
